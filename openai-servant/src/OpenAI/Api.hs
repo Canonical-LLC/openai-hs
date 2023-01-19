@@ -11,7 +11,8 @@ type OpenAIApi =
   "v1" :> OpenAIApiInternal
 
 type OpenAIApiInternal 
-    =    EnginesApi
+    =    CompletionsApi
+    :<|> EmbeddingsApi
     :<|> "files" :> FilesApi
     :<|> AnswerApi
     :<|> FineTuneApi
@@ -30,9 +31,8 @@ type FineTuneApi =
     :<|> OpenAIAuth :> "fine-tunes" :> Capture "fine_tune_id" FineTuneId :> "cancel" :> Post '[JSON] FineTune
     :<|> OpenAIAuth :> "fine-tunes" :> Capture "fine_tune_id" FineTuneId :> "events" :> Get '[JSON] (OpenAIList FineTuneEvent)
 
-type EnginesApi =
-  OpenAIAuth :> Get '[JSON] (OpenAIList Engine)
-    :<|> OpenAIAuth :> Capture "engine_id" EngineId :> Get '[JSON] Engine
-    :<|> OpenAIAuth :> Capture "engine_id" EngineId :> "completions" :> ReqBody '[JSON] TextCompletionCreate :> Post '[JSON] TextCompletion
-    :<|> OpenAIAuth :> Capture "engine_id" EngineId :> "search" :> ReqBody '[JSON] SearchResultCreate :> Post '[JSON] (OpenAIList SearchResult)
-    :<|> OpenAIAuth :> "embeddings" :> ReqBody '[JSON] EmbeddingCreate :> Post '[JSON] (OpenAIList Embedding)
+type CompletionsApi =
+  OpenAIAuth :> "completions" :> ReqBody '[JSON] TextCompletionCreate :> Post '[JSON] TextCompletion
+
+type EmbeddingsApi =
+  OpenAIAuth :> "embeddings" :> ReqBody '[JSON] EmbeddingCreate :> Post '[JSON] (OpenAIList Embedding)

@@ -12,12 +12,6 @@ module OpenAI.Client
     TimeStamp (..),
     OpenAIList (..),
 
-    -- * Engine
-    EngineId (..),
-    Engine (..),
-    listEngines,
-    getEngine,
-
     -- * Text completion
     TextCompletionId (..),
     TextCompletionChoice (..),
@@ -43,17 +37,11 @@ module OpenAI.Client
     cancelFineTune,
     listFineTuneEvents,
 
-    -- * Searching
-    SearchResult (..),
-    SearchResultCreate (..),
-    searchDocuments,
-
     -- * File API
     FileCreate (..),
     File (..),
     FileId (..),
     FileHunk (..),
-    SearchHunk (..),
     ClassificationHunk (..),
     FineTuneHunk (..),
     FileDeleteConfirmation (..),
@@ -119,8 +107,7 @@ openaiBaseUrl = BaseUrl Https "api.openai.com" 443 ""
     N :: OpenAIClient -> ARG -> ARG2 -> IO (Either ClientError R);\
     N sc a b = runRequest (scMaxRetries sc) 0 $ runClientM (N##' (scBasicAuthData sc) a b) (mkClientEnv (scManager sc) openaiBaseUrl)
 
-EP2 (completeText, EngineId, TextCompletionCreate, TextCompletion)
-EP2 (searchDocuments, EngineId, SearchResultCreate, (OpenAIList SearchResult))
+EP (completeText, TextCompletionCreate, TextCompletion)
 EP (createEmbedding, EmbeddingCreate, (OpenAIList Embedding))
 
 EP (createFineTune, FineTuneCreate, FineTune)
@@ -128,9 +115,6 @@ EP0 (listFineTunes, (OpenAIList FineTune))
 EP (getFineTune, FineTuneId, FineTune)
 EP (cancelFineTune, FineTuneId, FineTune)
 EP (listFineTuneEvents, FineTuneId, (OpenAIList FineTuneEvent))
-
-EP0 (listEngines, (OpenAIList Engine))
-EP (getEngine, EngineId, Engine)
 
 createFile :: OpenAIClient -> FileCreate -> IO (Either ClientError File)
 createFile sc rfc =
@@ -143,12 +127,8 @@ EP (deleteFile, FileId, FileDeleteConfirmation)
 
 EP (getAnswer, AnswerReq, AnswerResp)
 
-( listEngines'
-    :<|> getEngine'
-    :<|> completeText'
-    :<|> searchDocuments'
-    :<|> createEmbedding'
-  )
+completeText'
+  :<|> createEmbedding'
   :<|> (createFileInternal' :<|> deleteFile')
   :<|> getAnswer'
   :<|> ( createFineTune'

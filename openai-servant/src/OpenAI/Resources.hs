@@ -6,10 +6,6 @@ module OpenAI.Resources
     TimeStamp (..),
     OpenAIList (..),
 
-    -- * Engine
-    EngineId (..),
-    Engine (..),
-
     -- * Text completion
     TextCompletionId (..),
     TextCompletionChoice (..),
@@ -28,16 +24,11 @@ module OpenAI.Resources
     FineTune (..),
     FineTuneEvent (..),
 
-    -- * Searching
-    SearchResult (..),
-    SearchResultCreate (..),
-
     -- * File API
     FileCreate (..),
     FileId (..),
     File (..),
     FileHunk (..),
-    SearchHunk (..),
     ClassificationHunk (..),
     FineTuneHunk (..),
     FileDeleteConfirmation (..),
@@ -91,16 +82,6 @@ instance Monoid (OpenAIList a) where
 instance Applicative OpenAIList where
   pure = OpenAIList . pure
   (<*>) go x = OpenAIList (olData go <*> olData x)
-
-newtype EngineId = EngineId {unEngineId :: T.Text}
-  deriving (Show, Eq, ToJSON, FromJSON, ToHttpApiData)
-
-data Engine = Engine
-  { eId :: EngineId,
-    eOwner :: T.Text,
-    eReady :: Bool
-  }
-  deriving (Show, Eq)
 
 newtype TextCompletionId = TextCompletionId {unTextCompletionId :: T.Text}
   deriving (Show, Eq, ToJSON, FromJSON, ToHttpApiData)
@@ -213,27 +194,6 @@ data FineTune = FineTune
   }
   deriving (Show, Eq)
 
-data SearchResult = SearchResult
-  { srDocument :: Int,
-    srScore :: Double,
-    srMetadata :: Maybe T.Text
-  }
-  deriving (Show, Eq)
-
-data SearchResultCreate = SearchResultCreate
-  { sccrFile :: Maybe FileId,
-    sccrDocuments :: Maybe (V.Vector T.Text),
-    sccrQuery :: T.Text,
-    sccrReturnMetadata :: Bool
-  }
-  deriving (Show, Eq)
-
-data SearchHunk = SearchHunk
-  { shText :: T.Text,
-    shMetadata :: Maybe T.Text
-  }
-  deriving (Show, Eq)
-
 data ClassificationHunk = ClassificationHunk
   { chText :: T.Text,
     chLabel :: T.Text
@@ -247,8 +207,7 @@ data FineTuneHunk = FineTuneHunk
   deriving (Show, Eq)
 
 data FileHunk
-  = FhSearch SearchHunk
-  | FhClassifications ClassificationHunk
+  = FhClassifications ClassificationHunk
   | FhFineTune FineTuneHunk
   deriving (Show, Eq)
 
@@ -278,8 +237,7 @@ data AnswerReq = AnswerReq
   { arFile :: Maybe FileId,
     arDocuments :: Maybe (V.Vector T.Text),
     arQuestion :: T.Text,
-    arSearchModel :: EngineId,
-    arModel :: EngineId,
+    arModel :: T.Text,
     arExamplesContext :: T.Text,
     arExamples :: [[T.Text]],
     arReturnMetadata :: Bool
@@ -292,12 +250,9 @@ data AnswerResp = AnswerResp
   deriving (Show, Eq)
 
 $(deriveJSON (jsonOpts 2) ''OpenAIList)
-$(deriveJSON (jsonOpts 1) ''Engine)
 $(deriveJSON (jsonOpts 3) ''TextCompletionChoice)
 $(deriveJSON (jsonOpts 2) ''TextCompletion)
 $(deriveJSON (jsonOpts 4) ''TextCompletionCreate)
-$(deriveJSON (jsonOpts 2) ''SearchResult)
-$(deriveJSON (jsonOpts 4) ''SearchResultCreate)
 $(deriveJSON (jsonOpts 1) ''File)
 $(deriveJSON (jsonOpts 3) ''FileDeleteConfirmation)
 $(deriveJSON (jsonOpts 2) ''AnswerReq)
@@ -307,7 +262,6 @@ $(deriveJSON (jsonOpts 1) ''Embedding)
 $(deriveJSON (jsonOpts 3) ''FineTuneCreate)
 $(deriveJSON (jsonOpts 3) ''FineTuneEvent)
 $(deriveJSON (jsonOpts 2) ''FineTune)
-$(deriveJSON (jsonOpts 2) ''SearchHunk)
 $(deriveJSON (jsonOpts 2) ''ClassificationHunk)
 $(deriveJSON (jsonOpts 3) ''FineTuneHunk)
 
@@ -317,7 +271,6 @@ packDocuments docs =
     map
       ( \t -> A.encode $
           case t of
-            FhSearch x -> A.toJSON x
             FhClassifications x -> A.toJSON x
             FhFineTune x -> A.toJSON x
       )
