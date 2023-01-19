@@ -154,7 +154,10 @@ defaultTextCompletionCreate prompt =
     }
 
 data EmbeddingCreate = EmbeddingCreate
-  {ecInput :: T.Text}
+  { ecInput :: T.Text
+  , ecModel :: T.Text
+  , ecUser  :: Maybe T.Text
+  }
   deriving (Show, Eq)
 
 data Embedding = Embedding

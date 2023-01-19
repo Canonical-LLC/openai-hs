@@ -10,8 +10,8 @@ type OpenAIAuth = BasicAuth "OpenAI API" ()
 type OpenAIApi =
   "v1" :> OpenAIApiInternal
 
-type OpenAIApiInternal =
-  "engines" :> EnginesApi
+type OpenAIApiInternal 
+    =    EnginesApi
     :<|> "files" :> FilesApi
     :<|> AnswerApi
     :<|> FineTuneApi
@@ -35,4 +35,4 @@ type EnginesApi =
     :<|> OpenAIAuth :> Capture "engine_id" EngineId :> Get '[JSON] Engine
     :<|> OpenAIAuth :> Capture "engine_id" EngineId :> "completions" :> ReqBody '[JSON] TextCompletionCreate :> Post '[JSON] TextCompletion
     :<|> OpenAIAuth :> Capture "engine_id" EngineId :> "search" :> ReqBody '[JSON] SearchResultCreate :> Post '[JSON] (OpenAIList SearchResult)
-    :<|> OpenAIAuth :> Capture "engine_id" EngineId :> "embeddings" :> ReqBody '[JSON] EmbeddingCreate :> Post '[JSON] (OpenAIList Embedding)
+    :<|> OpenAIAuth :> "embeddings" :> ReqBody '[JSON] EmbeddingCreate :> Post '[JSON] (OpenAIList Embedding)
