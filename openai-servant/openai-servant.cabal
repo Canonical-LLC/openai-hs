@@ -59,4 +59,5 @@ library
     , text
     , time
     , vector
+    , unordered-containers
   default-language: Haskell2010

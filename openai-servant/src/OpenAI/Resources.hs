@@ -48,6 +48,7 @@ import qualified Data.Vector as V
 import OpenAI.Internal.Aeson
 import Servant.API
 import Servant.Multipart.API
+import qualified Data.HashMap.Strict as HM
 
 -- | A 'UTCTime' wrapper that has unix timestamp JSON representation
 newtype TimeStamp = TimeStamp {unTimeStamp :: UTCTime}
@@ -103,17 +104,22 @@ data TextCompletion = TextCompletion
   deriving (Show, Eq)
 
 data TextCompletionCreate = TextCompletionCreate
-  { tccrPrompt :: T.Text, -- TODO: support lists of strings
+  { tccrModel :: T.Text,
+    tccrPrompt :: T.Text, -- TODO: support lists of strings
+    tccrSuffix :: Maybe T.Text,
     tccrMaxTokens :: Maybe Int,
     tccrTemperature :: Maybe Double,
     tccrTopP :: Maybe Double,
     tccrN :: Maybe Int,
+    tccrStream :: Maybe Bool,
     tccrLogprobs :: Maybe Int,
     tccrEcho :: Maybe Bool,
     tccrStop :: Maybe (V.Vector T.Text),
     tccrPresencePenalty :: Maybe Double,
     tccrFrequencyPenalty :: Maybe Double,
-    tccrBestOf :: Maybe Int
+    tccrBestOf :: Maybe Int,
+    tccrLogitBias :: Maybe (HM.HashMap T.Text Double),
+    tccrUser  :: Maybe T.Text
   }
   deriving (Show, Eq)
 
@@ -121,17 +127,22 @@ data TextCompletionCreate = TextCompletionCreate
 defaultTextCompletionCreate :: T.Text -> TextCompletionCreate
 defaultTextCompletionCreate prompt =
   TextCompletionCreate
-    { tccrPrompt = prompt,
+    { tccrModel = "ada",
+      tccrPrompt = prompt,
+      tccrSuffix = Nothing,
       tccrMaxTokens = Nothing,
       tccrTemperature = Nothing,
       tccrTopP = Nothing,
       tccrN = Nothing,
+      tccrStream = Nothing,
       tccrLogprobs = Nothing,
       tccrEcho = Nothing,
       tccrStop = Nothing,
       tccrPresencePenalty = Nothing,
       tccrFrequencyPenalty = Nothing,
-      tccrBestOf = Nothing
+      tccrBestOf = Nothing,
+      tccrLogitBias = Nothing,
+      tccrUser = Nothing
     }
 
 data EmbeddingCreate = EmbeddingCreate
