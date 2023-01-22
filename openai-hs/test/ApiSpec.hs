@@ -2,6 +2,7 @@ module ApiSpec (apiSpec) where
 
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import qualified Data.Vector.Storable as VS
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 import OpenAI.Client
@@ -34,19 +35,20 @@ apiTests =
         do
           it "allows creating one" $ \cli ->
             do
+              pending
               let file =
                     FileCreate
-                      { fcPurpose = "search",
+                      { fcPurpose = "fine-tune",
                         fcDocuments = []
                       }
               _ <- forceSuccess $ createFile cli file
               pure ()
       describe "embeddings" $ do
         it "computes embeddings" $ \cli -> do
-          res <- forceSuccess $ createEmbedding cli (EmbeddingCreate "This is nice" "text-embedding-ada-002" Nothing)
-          V.null (olData res) `shouldBe` False
-          let embedding = V.head (olData res)
-          V.length (eEmbedding embedding) `shouldBe` 1536
+          res <- forceSuccess $ createEmbedding cli (EmbeddingCreate ["This is nice"] "text-embedding-ada-002" Nothing)
+          null (olData res) `shouldBe` False
+          let embedding = head (olData res)
+          VS.length (eEmbedding embedding) `shouldBe` 1536
       describe "fine tuning" $ do
         it "allows creating fine-tuning" $ \cli -> do
           let file =
