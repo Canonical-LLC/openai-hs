@@ -45,6 +45,7 @@ import qualified Data.Text as T
 import Data.Time
 import Data.Time.Clock.POSIX
 import qualified Data.Vector as V
+import qualified Data.Vector.Storable as VS
 import OpenAI.Internal.Aeson
 import Servant.API
 import Servant.Multipart.API
@@ -68,9 +69,9 @@ instance ToHttpApiData TimeStamp where
         unix = round . utcTimeToPOSIXSeconds . unTimeStamp $ x
      in T.pack (show unix)
 
--- | A 'V.Vector' wrapper.
+-- | A list wrapper.
 newtype OpenAIList a = OpenAIList
-  { olData :: V.Vector a
+  { olData :: [a]
   }
   deriving (Show, Eq, Functor)
 
@@ -146,14 +147,14 @@ defaultTextCompletionCreate prompt =
     }
 
 data EmbeddingCreate = EmbeddingCreate
-  { ecInput :: T.Text
+  { ecInput :: [T.Text]
   , ecModel :: T.Text
   , ecUser  :: Maybe T.Text
   }
   deriving (Show, Eq)
 
 data Embedding = Embedding
-  {eEmbedding :: V.Vector Double, eIndex :: Int}
+  {eEmbedding :: VS.Vector Double, eIndex :: Int}
   deriving (Show, Eq)
 
 newtype FineTuneId = FineTuneId {unFineTuneId :: T.Text}

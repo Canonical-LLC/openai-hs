@@ -24,6 +24,7 @@ module OpenAI.Client
     EmbeddingCreate (..),
     Embedding (..),
     createEmbedding,
+    createEmbedding2,
 
     -- * Fine tunes
     FineTuneId (..),
@@ -109,6 +110,7 @@ openaiBaseUrl = BaseUrl Https "api.openai.com" 443 ""
 
 EP (completeText, TextCompletionCreate, TextCompletion)
 EP (createEmbedding, EmbeddingCreate, (OpenAIList Embedding))
+EP (createEmbedding2, EmbeddingCreate, (OpenAIList Embedding))
 
 EP (createFineTune, FineTuneCreate, FineTune)
 EP0 (listFineTunes, (OpenAIList FineTune))
@@ -127,7 +129,7 @@ EP (deleteFile, FileId, FileDeleteConfirmation)
 
 EP (getAnswer, AnswerReq, AnswerResp)
 
-completeText'
+(completeText'
   :<|> createEmbedding'
   :<|> (createFileInternal' :<|> deleteFile')
   :<|> getAnswer'
@@ -136,5 +138,6 @@ completeText'
            :<|> getFineTune'
            :<|> cancelFineTune'
            :<|> listFineTuneEvents'
-         ) =
+         ))
+  :<|> createEmbedding2' =
     client api

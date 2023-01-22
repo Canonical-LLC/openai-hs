@@ -7,9 +7,10 @@ import Servant.Multipart.API
 
 type OpenAIAuth = BasicAuth "OpenAI API" ()
 
-type OpenAIApi =
-  "v1" :> OpenAIApiInternal
-
+type OpenAIApi 
+  = "v1" :> OpenAIApiInternal
+  :<|> "v2" :> EmbeddingsApi
+  
 type OpenAIApiInternal 
     =    CompletionsApi
     :<|> EmbeddingsApi
