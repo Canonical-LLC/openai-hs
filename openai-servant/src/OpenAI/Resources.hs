@@ -128,7 +128,7 @@ data TextCompletionCreate = TextCompletionCreate
 defaultTextCompletionCreate :: T.Text -> TextCompletionCreate
 defaultTextCompletionCreate prompt =
   TextCompletionCreate
-    { tccrModel = "text-davinci-003",
+    { tccrModel = "text-embedding-ada-002",
       tccrPrompt = prompt,
       tccrSuffix = Nothing,
       tccrMaxTokens = Nothing,
