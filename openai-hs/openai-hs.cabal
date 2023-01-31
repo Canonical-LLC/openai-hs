@@ -30,6 +30,7 @@ library
   exposed-modules:
       OpenAI.Client
       OpenAI.Client.Internal.Helpers
+      OpenAI.Client.Internal.SSE
   other-modules:
       Paths_openai_hs
   hs-source-dirs:
@@ -47,7 +48,10 @@ library
       ScopedTypeVariables
       DeriveGeneric
       DeriveFunctor
-  ghc-options: -Wall -fwarn-tabs -fwarn-incomplete-uni-patterns -fwarn-incomplete-record-updates
+      LambdaCase
+      DerivingStrategies
+      DeriveAnyClass
+  ghc-options: -Wall -Werror -fwarn-tabs -fwarn-incomplete-uni-patterns -fwarn-incomplete-record-updates
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -61,6 +65,10 @@ library
     , servant-client
     , servant-multipart-client
     , text
+    , wai-extra
+    , streaming-events
+    , streaming
+    , attoparsec
   default-language: Haskell2010
 
 test-suite openai-hs-test
