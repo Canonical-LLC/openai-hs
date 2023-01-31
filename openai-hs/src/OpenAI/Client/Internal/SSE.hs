@@ -1,7 +1,6 @@
 module OpenAI.Client.Internal.SSE where
 
 import Network.HTTP.Client 
-import Streaming
 import OpenAI.Resources
 import Data.Aeson
 import GHC.Generics
