@@ -53,12 +53,17 @@ module OpenAI.Client
     getAnswer,
     AnswerReq (..),
     AnswerResp (..),
+
+    -- * SSE
+    ServerEvent(..),
+    TextCompletionEvent(..),
+    withEvents,
+    withServerEvents 
   )
 where
 
 import qualified Data.ByteString.Lazy as BSL
 import Data.Proxy
-import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Network.HTTP.Client (Manager)
 import OpenAI.Api
@@ -67,16 +72,8 @@ import OpenAI.Resources
 import Servant.API
 import Servant.Client
 import qualified Servant.Multipart.Client as MP
+import OpenAI.Client.Internal.SSE
 
--- | Your OpenAI API key. Can be obtained from the OpenAI dashboard. Format: @sk-<redacted>@
-type ApiKey = T.Text
-
--- | Holds a 'Manager' and your API key.
-data OpenAIClient = OpenAIClient
-  { scBasicAuthData :: BasicAuthData,
-    scManager :: Manager,
-    scMaxRetries :: Int
-  }
 
 -- | Construct a 'OpenAIClient'. Note that the passed 'Manager' must support https (e.g. via @http-client-tls@)
 makeOpenAIClient ::
@@ -90,8 +87,6 @@ makeOpenAIClient k = OpenAIClient (BasicAuthData "" (T.encodeUtf8 k))
 api :: Proxy OpenAIApi
 api = Proxy
 
-openaiBaseUrl :: BaseUrl
-openaiBaseUrl = BaseUrl Https "api.openai.com" 443 ""
 
 #define EP0(N, R) \
     N##' :: BasicAuthData -> ClientM R;\

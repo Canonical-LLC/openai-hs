@@ -9,6 +9,10 @@ import qualified Data.ByteString.Lazy as BSL
 import           Data.Attoparsec.ByteString.Char8
 import           Control.Applicative 
 import           Control.Monad (when)
+import OpenAI.Client.Internal.Helpers
+import OpenAI.Internal.Aeson
+import Servant.Client.Core.BaseUrl
+import Servant.API
 
 event :: Parser ServerEvent
 event = (sevent <|> comment <|> retry) <* eol
@@ -33,47 +37,74 @@ eol = char '\n'
 
 data ServerEvent
     = ServerEvent {
-        eventName :: Maybe BS.ByteString,
-        eventId   :: Maybe BS.ByteString,
-        eventData :: BSL.ByteString
+        seEventName :: Maybe BS.ByteString,
+        seEventId   :: Maybe BS.ByteString,
+        seEventData :: BSL.ByteString
         }
     | CommentEvent {
-        eventComment :: BS.ByteString
+        seEventComment :: BS.ByteString
         }
     | RetryEvent {
-        eventRetry :: Int
+        seEventRetry :: Int
         }
     | CloseEvent
 
 -- Make a type called Event for the following json
 -- {"id": "cmpl-XXXXXXXXXXXXXXXXXXXXXXX", "object": "text_completion", "created": 1671700494, "choices": [{"text": " way", "index": 0, "logprobs": null, "finish_reason": null}], "model": "text-davinci-003"}
-data Event = Event { 
-  id :: String,
-  object :: String,
-  created :: Int,
-  choices :: [TextCompletionChoice],
-  model :: String
+data TextCompletionEvent = TextCompletionEvent { 
+  tceId :: String,
+  tceObject :: String,
+  tceCreated :: Int,
+  tceChoices :: [TextCompletionChoice],
+  tceModel :: String
 } deriving stock (Show, Eq, Generic)
-  deriving anyclass (FromJSON, ToJSON)
 
+$(deriveJSON (jsonOpts 3) ''TextCompletionEvent)
 
-withEvents :: Manager -> String ->  (Either String ServerEvent -> IO ()) -> IO ()
-withEvents m url f = do 
+decodeEvent :: (Either String TextCompletionEvent -> IO ()) -> Either String ServerEvent -> IO ()
+decodeEvent f = \case 
+  Left e -> f $ Left e
+  Right (ServerEvent _ _ d) -> f $ eitherDecode d
+  Right _ -> pure ()
+
+-- using withServerEvents, make a withEvents function that takes a Manager, a String, 
+-- and a function that takes an Either String Event and returns an IO ()
+withEvents :: OpenAIClient -> TextCompletionCreate -> (Either String TextCompletionEvent -> IO ()) -> IO ()
+withEvents c tc f = withServerEvents 
+  (scManager c) 
+  (scBasicAuthData c) 
+  (showBaseUrl openaiBaseUrl <> "/v1/completions") 
+  (encode tc)
+  (decodeEvent f)
+
+withServerEvents :: Manager -> BasicAuthData -> String -> BSL.ByteString -> (Either String ServerEvent -> IO ()) -> IO ()
+withServerEvents m (BasicAuthData _ key) url postBody f = do 
     -- make a request from the url
-  req <- parseRequest url
+  initialRequest <- parseRequest url
+  let req = initialRequest 
+        { method = "POST"
+        , requestBody = RequestBodyLBS postBody 
+        , requestHeaders = [ ("Content-Type", "application/json")
+                           , ("Accept", "text/event-stream")
+                           , ("Authorization", "Bearer " <> key)
+                           ]
+        }
 
   let 
     parseLoop :: IO BS.ByteString -> BS.ByteString -> IO ()
     parseLoop source partial = do
         -- get the body of the response
       body <- source
-      when (not (BS.null body) || not (BS.null partial)) $ do 
-        parseWith source event (partial <> body) >>= \case 
-          Done i r -> do 
-            f $ Right r
-            parseLoop source i
-          Partial _ -> f $ Left "Unexpected end of input"
-          Fail _ _ e -> f $ Left e
+      putStrLn $ "body: " <> show body
+
+      when (body /= "data: [DONE]\n\n") $ do 
+        when (not (BS.null body) || not (BS.null partial)) $ do 
+          parseWith source event (partial <> body) >>= \case 
+            Done i r -> do 
+              f $ Right r
+              parseLoop source i
+            Partial _ -> f $ Left "Unexpected end of input"
+            Fail _ _ e -> f $ Left e
         
   withResponse req m $ \resp -> do 
     let bodyReader = responseBody resp

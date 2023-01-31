@@ -92,7 +92,7 @@ data TextCompletionChoice = TextCompletionChoice
   { tccText :: T.Text,
     tccIndex :: Int,
     tccLogProps :: Maybe Int,
-    tccFinishReason :: T.Text
+    tccFinishReason :: Maybe T.Text
   }
   deriving (Show, Eq)
 

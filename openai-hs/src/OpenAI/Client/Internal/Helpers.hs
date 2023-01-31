@@ -6,6 +6,24 @@ module OpenAI.Client.Internal.Helpers where
 
 import Network.HTTP.Types.Status
 import Servant.Client
+import Servant.API
+import Network.HTTP.Client (Manager)
+import qualified Data.Text as T
+
+
+-- | Your OpenAI API key. Can be obtained from the OpenAI dashboard. Format: @sk-<redacted>@
+type ApiKey = T.Text
+
+-- | Holds a 'Manager' and your API key.
+data OpenAIClient = OpenAIClient
+  { scBasicAuthData :: BasicAuthData,
+    scManager :: Manager,
+    scMaxRetries :: Int
+  }
+
+
+openaiBaseUrl :: BaseUrl
+openaiBaseUrl = BaseUrl Https "api.openai.com" 443 ""
 
 runRequest :: Int -> Int -> IO (Either ClientError a) -> IO (Either ClientError a)
 runRequest maxRetries !retryCount makeRequest =
