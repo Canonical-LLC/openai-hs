@@ -96,15 +96,26 @@ withServerEvents m (BasicAuthData _ key) url postBody f = do
         -- get the body of the response
       body <- source
       putStrLn $ "body: " <> show body
+      -- list the last 8 bytes of the body and split into two parts
+      let (firstPart, lastPart) = BS.splitAt (BS.length body - 14) body
 
-      when (body /= "data: [DONE]\n\n") $ do 
-        when (not (BS.null body) || not (BS.null partial)) $ do 
-          parseWith source event (partial <> body) >>= \case 
-            Done i r -> do 
-              f $ Right r
-              parseLoop source i
-            Partial _ -> f $ Left "Unexpected end of input"
-            Fail _ _ e -> f $ Left e
+      let 
+        bytesToDecode 
+          = if (lastPart == "data: [DONE]\n\n") then
+              if (firstPart == "") then 
+                ""
+              else 
+                firstPart
+            else 
+              body
+ 
+      when (not (BS.null bytesToDecode) || not (BS.null partial)) $ do 
+        parseWith source event (partial <> bytesToDecode) >>= \case 
+          Done i r -> do 
+            f $ Right r
+            parseLoop source i
+          Partial _ -> f $ Left "Unexpected end of input"
+          Fail _ _ e -> f $ Left e
         
   withResponse req m $ \resp -> do 
     let bodyReader = responseBody resp
